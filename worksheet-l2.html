@@ -189,6 +189,13 @@
         if (document.getElementById("pw").value !== LAB_PASSWORD) {
           e.preventDefault();
           alert("Incorrect teacher password.");
+          return;
+        }
+        // Check if worksheet is saved and valid for L2
+        const ws = JSON.parse(localStorage.getItem("DLAB_WORKSHEET") || "null");
+        if (!ws || ws.level !== "L2" || !ws.responses || !Array.isArray(ws.responses.fullColumnOrder) || ws.responses.fullColumnOrder.length === 0) {
+          e.preventDefault();
+          alert("Please save your worksheet before continuing to the discussion.");
         }
       });
     }

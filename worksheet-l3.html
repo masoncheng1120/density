@@ -221,6 +221,13 @@
         if (document.getElementById("pw").value !== LAB_PASSWORD) {
           e.preventDefault();
           alert("Incorrect teacher password.");
+          return;
+        }
+        // Check if worksheet is saved and valid for L3
+        const ws = JSON.parse(localStorage.getItem("DLAB_WORKSHEET") || "null");
+        if (!ws || ws.level !== "L3" || !Array.isArray(ws.predictions) || ws.predictions.length === 0 || !Array.isArray(ws.experimental) || ws.experimental.length === 0) {
+          e.preventDefault();
+          alert("Please save your worksheet before continuing to the discussion.");
         }
       });
     }
