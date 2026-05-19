@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Density Lab - Worksheet Router</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f8fc;
+      color: #0f172a;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #dbe7f3;
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 560px;
+      text-align: center;
+    }
+    a {
+      display: inline-block;
+      margin-top: 10px;
+      text-decoration: none;
+      background: #0f172a;
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="msg">Routing to your worksheet...</div>
+  <script>
+    const result = JSON.parse(localStorage.getItem("DLAB_RESULT") || "null");
+    const msg = document.getElementById("msg");
+
+    if (!result || !result.level) {
+      msg.innerHTML = "No assignment found. Please finish chatbot first.<br><a href=\"index.html\">Go to Chatbot</a>";
+    } else if (result.level === "L1") {
+      window.location.replace("worksheet-l1.html");
+    } else if (result.level === "L2") {
+      window.location.replace("worksheet-l2.html");
+    } else if (result.level === "L3") {
+      window.location.replace("worksheet-l3.html");
+    } else {
+      msg.innerHTML = "Invalid level assignment. Please redo chatbot.<br><a href=\"index.html\">Go to Chatbot</a>";
+    }
+  </script>
+</body>
+</html>

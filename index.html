@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mr. Mason's Density Lab - Chatbot</title>
+  <style>
+    :root {
+      --blue: #2563eb;
+      --green: #16a34a;
+      --gold: #d97706;
+      --bg: #f4f8fc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #dbe7f3;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background:
+        radial-gradient(circle at 5% 0%, rgba(37, 99, 235, .16), transparent 24%),
+        radial-gradient(circle at 95% 10%, rgba(217, 119, 6, .14), transparent 22%),
+        var(--bg);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 18px 14px 32px;
+    }
+    .hero {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .title { font-size: 30px; font-weight: 900; line-height: 1.1; }
+    .sub { color: var(--muted); margin-top: 4px; font-size: 14px; }
+
+    .setup {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      align-items: end;
+      margin-bottom: 12px;
+    }
+    .field { display: grid; gap: 6px; }
+    .field label { font-size: 12px; color: var(--muted); font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+    input, select, textarea, button {
+      font: inherit;
+    }
+    input, select {
+      width: 100%;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--text);
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(90deg, #1d4ed8, #2563eb);
+    }
+    .chat {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+      min-height: 330px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 10px;
+    }
+    .msgs {
+      overflow-y: auto;
+      max-height: 420px;
+      display: grid;
+      gap: 10px;
+      padding-right: 4px;
+    }
+    .m {
+      padding: 10px 12px;
+      border-radius: 12px;
+      max-width: 88%;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+    .ai { background: #eff6ff; border: 1px solid #c7ddff; }
+    .me { background: #1d4ed8; color: #fff; margin-left: auto; }
+    .inputRow { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    .inputRow textarea {
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      resize: vertical;
+      min-height: 44px;
+      max-height: 120px;
+    }
+
+    .result {
+      margin-top: 12px;
+      display: none;
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .blue { background: var(--blue); }
+    .green { background: var(--green); }
+    .gold { background: var(--gold); }
+
+    .feedback {
+      display: grid;
+      gap: 8px;
+      font-size: 14px;
+      margin: 10px 0;
+    }
+
+    .nextBtn {
+      display: inline-block;
+      margin-top: 6px;
+      text-decoration: none;
+      background: #0f172a;
+      color: #fff;
+      font-weight: 800;
+      padding: 10px 13px;
+      border-radius: 11px;
+    }
+
+    @media (max-width: 680px) {
+      .setup { grid-template-columns: 1fr; }
+      .title { font-size: 25px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="title">Mr. Mason's Density Lab Chatbot</div>
+      <div class="sub">Step 1 of 3: Chatbot first, then experiment, then discussion</div>
+    </section>
+
+    <section class="setup" id="setup">
+      <div class="field">
+        <label for="name">Student Name</label>
+        <input id="name" type="text" maxlength="30" placeholder="Your name" />
+      </div>
+      <div class="field">
+        <label for="groupLetter">Letter in group</label>
+        <select id="groupLetter">
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
+          <option value="E">E</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="groupSize">Group Size</label>
+        <select id="groupSize">
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5" selected>5</option>
+        </select>
+      </div>
+      <button id="startBtn" type="button">Start Chat</button>
+    </section>
+
+    <section class="chat" id="chat" style="display:none;">
+      <div class="msgs" id="msgs"></div>
+      <div class="inputRow">
+        <textarea id="chatInput" placeholder="Type your answer"></textarea>
+        <button id="sendBtn" type="button">Send</button>
+      </div>
+    </section>
+
+    <section class="result" id="resultCard">
+      <div id="teamBadge" class="badge">Team</div>
+      <div id="teamLine" style="font-weight:800; font-size:18px;"></div>
+      <div class="feedback" id="feedback"></div>
+      <div id="encourage" style="font-size:15px;"></div>
+      <a class="nextBtn" href="worksheet.html">Go To My Worksheet</a>
+    </section>
+  </div>
+
+  <script>
+    const DEEPSEEK_API_KEY = "sk-5726235d3a8743eaa90732add6c09bfd";
+    const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
+
+    const TEAMS = {
+      blue: { name: "Team Blue", role: "Builder", level: "L1", emoji: "🔵" },
+      green: { name: "Team Green", role: "Researcher", level: "L2", emoji: "🟢" },
+      gold: { name: "Team Gold", role: "Architect", level: "L3", emoji: "🟡" }
+    };
+
+    let phase = "idle";
+    const answers = { q1: "", q2: "", q3: "" };
+    const q = [
+      "Question 1 of 3: What is density?",
+      "Question 2 of 3: What is the formula for density?",
+      "Question 3 of 3: Why does a helium balloon float in air?"
+    ];
+
+    const $ = (id) => document.getElementById(id);
+
+    function add(role, text) {
+      const d = document.createElement("div");
+      d.className = `m ${role}`;
+      d.textContent = text;
+      $("msgs").appendChild(d);
+      $("msgs").scrollTop = $("msgs").scrollHeight;
+    }
+
+    function heuristicAssign() {
+      const a1 = answers.q1.toLowerCase();
+      const a2 = answers.q2.toLowerCase();
+      const a3 = answers.q3.toLowerCase();
+
+      const q1Strong = /(mass|volume|particles|packed|compact)/.test(a1);
+      const q2Right = /(mass\s*\/\s*volume|d\s*=\s*m\s*\/\s*v|density\s*=\s*mass\s*\/\s*volume)/.test(a2);
+      const q3Strong = /(less dense than air|density|air.*dense|buoy)/.test(a3);
+
+      const score = [q1Strong, q2Right, q3Strong].filter(Boolean).length;
+      if (score <= 1) return "blue";
+      if (score === 2) return "green";
+      return "gold";
+    }
+
+    function coachReply(questionNumber, answer) {
+      const trimmed = answer.trim();
+      if (questionNumber === 1) {
+        if (/(mass|volume|packed|particles|space)/i.test(trimmed)) {
+          return "Mr. Mason here: nice start. You are already using science ideas like mass, volume, or how tightly matter is packed.";
+        }
+        return "Mr. Mason here: good first try. As you keep going, try to connect density to mass and volume, not just whether something feels heavy.";
+      }
+      if (questionNumber === 2) {
+        if (/(mass\s*\/\s*volume|d\s*=\s*m\s*\/\s*v|density\s*=\s*mass\s*\/\s*volume)/i.test(trimmed)) {
+          return "Nice work. That formula is the key tool scientists use when comparing how dense materials are.";
+        }
+        return "Thanks. Keep sharpening it: Mr. Mason is looking for the relationship between mass and volume.";
+      }
+      if (/(less dense|density|air|float|buoy)/i.test(trimmed)) {
+        return "That is a thoughtful explanation. You are connecting floating to density, which is exactly the big idea in this lab.";
+      }
+      return "Thanks for explaining your thinking. Even if it is not perfect yet, your answer helps Mr. Mason see what you understand so far.";
+    }
+
+    async function callAPI(systemPrompt, messages) {
+      const res = await fetch(DEEPSEEK_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          temperature: 0.2,
+          max_tokens: 500,
+          messages: [{ role: "system", content: systemPrompt }, ...messages]
+        })
+      });
+      if (!res.ok) throw new Error("API error");
+      const data = await res.json();
+      return data.choices[0].message.content.trim();
+    }
+
+    async function evaluate() {
+      add("ai", "Mr. Mason is checking your understanding...");
+      const sys = `You are Mr. Mason, a warm Grade 7 science teacher assigning level by density understanding.
+    Sound human, encouraging, and clear.
+Q1: "${answers.q1}"
+Q2: "${answers.q2}"
+Q3: "${answers.q3}"
+Rules:
+- blue/L1 for weak or incorrect basics.
+- green/L2 for mostly correct basics.
+- gold/L3 for strong and precise understanding.
+    Write feedbackLines as short, student-friendly comments from Mr. Mason.
+    Write message as a warm 1-2 sentence note from Mr. Mason.
+Output ONLY valid JSON with this exact shape:
+{"team":"blue|green|gold","feedbackLines":["...","...","..."],"message":"..."}`;
+
+      let parsed;
+      try {
+        const raw = await callAPI(sys, [{ role: "user", content: "Assign team now." }]);
+        const clean = raw.replace(/```[a-z]*\n?/gi, "").replace(/```/g, "").trim();
+        parsed = JSON.parse(clean);
+      } catch (e) {
+        const team = heuristicAssign();
+        parsed = {
+          team,
+          feedbackLines: [
+            "Mr. Mason on Q1: Try to include both mass and volume when you define density.",
+            "Mr. Mason on Q2: Remember, density = mass / volume.",
+            "Mr. Mason on Q3: Helium floats because it is less dense than air."
+          ],
+          message: "Nice effort. Keep using density words in your explanations, and Mr. Mason will help you build from there."
+        };
+      }
+
+      if (!TEAMS[parsed.team]) parsed.team = heuristicAssign();
+      const t = TEAMS[parsed.team];
+
+      const profile = {
+        name: $("name").value.trim(),
+        groupLetter: $("groupLetter").value,
+        groupSize: Number($("groupSize").value)
+      };
+
+      localStorage.setItem("DLAB_PROFILE", JSON.stringify(profile));
+      localStorage.setItem("DLAB_RESULT", JSON.stringify({
+        team: parsed.team,
+        level: t.level,
+        role: t.role,
+        teamName: t.name,
+        emoji: t.emoji,
+        feedbackLines: Array.isArray(parsed.feedbackLines) ? parsed.feedbackLines : [],
+        message: parsed.message || ""
+      }));
+
+      showResult(parsed.team, parsed.feedbackLines || [], parsed.message || "");
+    }
+
+    function showResult(team, feedbackLines, message) {
+      const t = TEAMS[team];
+      $("resultCard").style.display = "block";
+      const badge = $("teamBadge");
+      badge.className = `badge ${team}`;
+      badge.textContent = `${t.emoji} ${t.name}`;
+      $("teamLine").textContent = `${t.role}`;
+
+      const fb = $("feedback");
+      fb.innerHTML = "";
+      feedbackLines.forEach((line) => {
+        const p = document.createElement("div");
+        p.textContent = line;
+        fb.appendChild(p);
+      });
+      $("encourage").textContent = message;
+      add("ai", `Mr. Mason says: you are assigned to ${t.name}. Click the worksheet button below when you are ready.`);
+    }
+
+    function begin() {
+      const name = $("name").value.trim();
+      if (!name) {
+        alert("Please enter your name first.");
+        return;
+      }
+      $("chat").style.display = "grid";
+      $("setup").style.display = "none";
+      phase = "q1";
+      add("ai", `Hi ${name}, I am Mr. Mason. Welcome to our Density Lab.`);
+      add("ai", "Here is our plan: first, you will do this chatbot with me. Next, you will do your experiment worksheet. After that, you will complete the discussion.");
+      add("ai", "I will ask you 3 quick density questions so I can see what you already know and guide you to the right level. Do your best. It is completely okay if you are still learning.");
+      add("ai", q[0]);
+    }
+
+    async function onSend() {
+      const text = $("chatInput").value.trim();
+      if (!text) return;
+      $("chatInput").value = "";
+      add("me", text);
+
+      if (phase === "q1") {
+        answers.q1 = text;
+        add("ai", coachReply(1, text));
+        phase = "q2";
+        add("ai", q[1]);
+        return;
+      }
+      if (phase === "q2") {
+        answers.q2 = text;
+        add("ai", coachReply(2, text));
+        phase = "q3";
+        add("ai", q[2]);
+        return;
+      }
+      if (phase === "q3") {
+        answers.q3 = text;
+        add("ai", coachReply(3, text));
+        phase = "eval";
+        await evaluate();
+        phase = "done";
+      }
+    }
+
+    $("startBtn").addEventListener("click", begin);
+    $("sendBtn").addEventListener("click", onSend);
+    $("chatInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        onSend();
+      }
+    });
+  </script>
+</body>
+</html>

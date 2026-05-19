@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Density Lab - Discussion</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #f4f8fc; color: #0f172a; }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 16px 14px 28px; }
+    .card { background: #fff; border: 1px solid #dbe7f3; border-radius: 18px; padding: 14px; margin-bottom: 12px; }
+    .badge { display: inline-flex; gap: 8px; color: #fff; border-radius: 999px; padding: 7px 12px; font-weight: 900; background: #16a34a; }
+    .muted { color: #64748b; }
+    .chat { display: grid; gap: 10px; }
+    .questionBox {
+      background: #ecfdf5;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 15px;
+      line-height: 1.45;
+    }
+    .msgs { max-height: 400px; overflow-y: auto; display: grid; gap: 10px; }
+    .m { max-width: 88%; line-height: 1.45; border-radius: 12px; padding: 10px 12px; white-space: pre-wrap; }
+    .ai { background: #ecfdf5; border: 1px solid #bbf7d0; }
+    .me { background: #166534; color: #fff; margin-left: auto; }
+    .row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    textarea, button { font: inherit; }
+    textarea { border: 2px solid #dbe7f3; border-radius: 12px; padding: 10px; min-height: 44px; max-height: 120px; }
+    button { border: 0; border-radius: 11px; padding: 10px 12px; color: #fff; background: #0f172a; font-weight: 900; cursor: pointer; }
+    .actions { display: none; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .linkBtn { text-decoration: none; background: #7c3aed; color: #fff; padding: 10px 12px; border-radius: 11px; font-weight: 900; }
+    .exitBtn { font-size: 20px; padding: 18px 28px; border-radius: 14px; background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%); box-shadow: 0 8px 20px rgba(124, 58, 237, 0.35); }
+    .uploadGuide { display: none; margin-top: 10px; border-top: 1px dashed #dbe7f3; padding-top: 10px; font-size: 14px; line-height: 1.45; }
+    .uploadGuide h4 { margin: 0 0 6px; font-size: 15px; }
+    .uploadGuide ol { margin: 0 0 8px 18px; padding: 0; }
+    .driveLink { font-weight: 900; color: #166534; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="missing" style="display:none;">
+      <h2>Missing Data</h2>
+      <p class="muted">Please complete chatbot and worksheet first.</p>
+      <a href="index.html" class="linkBtn">Go to Chatbot</a>
+    </div>
+
+    <div id="main" style="display:none;">
+      <div class="card" id="head"></div>
+      <div class="card questionBox" id="starterQuestion"></div>
+      <div class="card" id="worksheetBox"></div>
+      <div class="card chat">
+        <div id="msgs" class="msgs"></div>
+        <div class="row">
+          <textarea id="input" placeholder="Type your discussion answer"></textarea>
+          <button id="send" type="button">Send</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="actions" id="actions">
+          <a class="linkBtn exitBtn" href="https://app.briskteaching.com/ws/vgxh3x" target="_blank" rel="noopener noreferrer">GO TO BRISK EXIT TICKET</a>
+          <button id="pdfBtn" type="button">Save PDF Report</button>
+        </div>
+        <div class="uploadGuide" id="uploadGuide">
+          <h4>After saving your PDF (iPad)</h4>
+          <ol>
+            <li>Tap <b>Save PDF Report</b> and wait for the PDF to download.</li>
+            <li>Open the Files app, then find your downloaded PDF in Downloads.</li>
+            <li>Tap Share, choose <b>Drive</b>, then tap <b>Upload</b>.</li>
+          </ol>
+          <a class="driveLink" href="https://drive.google.com/drive/folders/19tWw2LPwrtpsShMnLdvR25tQ3u1N-jGs?usp=drive_link" target="_blank" rel="noopener noreferrer">Open Google Drive to Upload PDF</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEEPSEEK_API_KEY = "sk-5726235d3a8743eaa90732add6c09bfd";
+    const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
+    const STARTER_QUESTION = "Pick one object from your ranking. Why is it between the liquids above and below it?";
+    let aiQuestionsAsked = 1;
+    let isAwaiting = false;
+    const convo = [];
+
+    const previewMode = new URLSearchParams(window.location.search).get("preview") === "1";
+    let profile = JSON.parse(localStorage.getItem("DLAB_PROFILE") || "null");
+    let result = JSON.parse(localStorage.getItem("DLAB_RESULT") || "null");
+    let worksheet = JSON.parse(localStorage.getItem("DLAB_WORKSHEET") || "null");
+
+    function getWorksheetContext() {
+      const order = Array.isArray(worksheet?.responses?.fullColumnOrder) ? worksheet.responses.fullColumnOrder : [];
+      const why = worksheet?.responses?.why || "";
+      if (!order.length) {
+        return {
+          summaryHtml: "<b>Worksheet connection:</b> Use your full column ranking and explanation from the experiment sheet in this discussion.",
+          boxHtml: `<div style="font-weight:900; margin-bottom:8px;">Your Worksheet Answers</div><div class="muted">No worksheet ranking was saved yet.</div>`,
+          starter: STARTER_QUESTION,
+          prompt: "No worksheet ranking was saved. Ask the student to refer to their column order and explanation."
+        };
+      }
+
+      const topThree = order.slice(0, 3).map((item) => `${item.rank}. ${item.object}`).join(", ");
+      const bottomThree = order.slice(-3).map((item) => `${item.rank}. ${item.object}`).join(", ");
+      return {
+        summaryHtml: `<b>Worksheet connection:</b> Your ranking starts with ${topThree} and ends with ${bottomThree}. Use your own ranking as evidence.`,
+        boxHtml: `<div style="font-weight:900; margin-bottom:8px;">Your Worksheet Answers</div><div style="margin-bottom:8px;"><b>Full Column Ranking:</b> ${order.map((item) => `${item.rank}. ${item.object}`).join("; ")}</div><div><b>Your Explanation:</b> ${why || "No written explanation saved yet."}</div>`,
+        starter: `Look at your worksheet ranking. You placed ${order[0].object} at ${order[0].rank} and ${order[order.length - 1].object} at ${order[order.length - 1].rank}. Pick one object and explain why it belongs where you placed it.`,
+        prompt: `Worksheet ranking: ${order.map((item) => `${item.rank}. ${item.object}`).join("; ")}\nStudent explanation: ${why || "(blank)"}`
+      };
+    }
+
+    if ((!profile || !result || !worksheet || result.level !== "L2") && !previewMode) {
+      document.getElementById("missing").style.display = "block";
+    } else {
+      if (!profile || !result || !worksheet || result.level !== "L2") {
+        profile = { name: "Preview Student", groupLetter: "B", groupSize: 5 };
+        result = { level: "L2", team: "green" };
+        worksheet = { level: "L2", team: "green", responses: {} };
+      }
+      document.getElementById("main").style.display = "block";
+      start();
+    }
+
+    function add(role, text) {
+      const d = document.createElement("div");
+      d.className = `m ${role}`;
+      d.textContent = text;
+      document.getElementById("msgs").appendChild(d);
+      document.getElementById("msgs").scrollTop = document.getElementById("msgs").scrollHeight;
+      convo.push({ role, text });
+    }
+
+    function start() {
+      const worksheetContext = getWorksheetContext();
+      document.getElementById("head").innerHTML = `
+        <div class="badge">🟢 Team Green Discussion</div>
+        <div style="font-weight:900; font-size:20px; margin-top:8px;">Step 3 of 3: Discussion</div>
+        <div class="muted" style="margin-top:4px;">${profile.name} | Researcher</div>
+      `;
+      document.getElementById("starterQuestion").innerHTML = `<b>Discussion with Mr. Mason:</b> Keep talking with the AI as long as needed. When your teacher tells you, use the Brisk exit ticket button above.`;
+      document.getElementById("worksheetBox").innerHTML = worksheetContext.boxHtml;
+      add("ai", `Welcome back, ${profile.name}. Mr. Mason here.`);
+      add("ai", `Question ${aiQuestionsAsked}: ${worksheetContext.starter}`);
+      document.getElementById("actions").style.display = "flex";
+
+      document.getElementById("send").addEventListener("click", onSend);
+      document.getElementById("input").addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); }
+      });
+      document.getElementById("pdfBtn").addEventListener("click", exportPDF);
+    }
+
+    async function callAPI(systemPrompt, messages) {
+      const res = await fetch(DEEPSEEK_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
+        body: JSON.stringify({ model: "deepseek-chat", temperature: 0.4, max_tokens: 240, messages: [{ role: "system", content: systemPrompt }, ...messages] })
+      });
+      if (!res.ok) throw new Error("API error");
+      const data = await res.json();
+      return data.choices[0].message.content.trim();
+    }
+
+    async function onSend() {
+      if (isAwaiting) return;
+      const input = document.getElementById("input");
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = "";
+      add("me", text);
+      const worksheetContext = getWorksheetContext();
+        const sys = `You are Mr. Mason, a Grade 7 density teacher for L2 students.
+    Student worksheet data:
+    ${worksheetContext.prompt}
+Give helpful scientific feedback in 2-3 sentences with clear density reasoning.
+    Speak like a real teacher, using a warm and encouraging tone.
+    Refer to the student's recorded ranking or written explanation when useful.
+Then ask exactly one short follow-up question.
+The follow-up must end with a question mark.`;
+      let reply = "Good reasoning. Connect your ranking to density values and layer positions. Which evidence most strongly supports your object's final rank?";
+      const nextQuestionNumber = aiQuestionsAsked + 1;
+      aiQuestionsAsked = nextQuestionNumber;
+      isAwaiting = true;
+      document.getElementById("send").disabled = true;
+      try {
+        reply = await callAPI(sys, convo.filter(x => x.role === "me").map(x => ({ role: "user", content: x.text })));
+      } catch (e) {}
+      finally {
+        isAwaiting = false;
+        document.getElementById("send").disabled = false;
+      }
+
+      add("ai", `Question ${nextQuestionNumber}: ${reply}`);
+    }
+
+    function exportPDF() {
+      const now = new Date().toLocaleDateString();
+      const chatHtml = convo.map(x => `<p><b>${x.role === "me" ? profile.name : "AI"}:</b> ${x.text.replace(/\n/g, "<br>")}</p>`).join("");
+      const html = `<div style="font-family:Georgia,serif;max-width:760px;margin:0 auto;padding:24px;"><h1 style="margin:0 0 10px;">Density Lab Report</h1><p><b>Date:</b> ${now}</p><p><b>Student:</b> ${profile.name}</p><p><b>Group:</b> ${profile.groupLetter} (${profile.groupSize})</p><p><b>Team:</b> Team Green</p><h3>Worksheet Summary</h3><pre style="white-space:pre-wrap;background:#f8fafc;padding:10px;border:1px solid #dbe7f3;">${JSON.stringify(worksheet, null, 2)}</pre><h3>Discussion Log</h3>${chatHtml}</div>`;
+      if (typeof html2pdf !== "undefined") {
+        const holder = document.createElement("div"); holder.innerHTML = html; document.body.appendChild(holder);
+        html2pdf().set({ margin: 10, filename: `${profile.name.replace(/\s+/g, "_")}_Density_Report.pdf`, image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" } }).from(holder).save().then(() => document.body.removeChild(holder));
+      }
+    }
+  </script>
+</body>
+</html>

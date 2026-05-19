@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Density Lab Worksheets and Discussion Preview</title>
+  <style>
+    :root {
+      --bg: #f4f8fc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: #dbe7f3;
+      --blue: #2563eb;
+      --blue-lite: #dbeafe;
+      --green: #16a34a;
+      --green-lite: #dcfce7;
+      --gold: #d97706;
+      --gold-lite: #fef3c7;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 14px 28px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 900;
+    }
+
+    .hero p {
+      margin: 6px 0 0;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      min-height: 420px;
+    }
+
+    .badge {
+      display: inline-block;
+      color: #fff;
+      font-weight: 900;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .blue { background: var(--blue); }
+    .green { background: var(--green); }
+    .gold { background: var(--gold); }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 19px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .block {
+      border-radius: 10px;
+      padding: 9px;
+      margin: 8px 0;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .b1 { background: var(--blue-lite); }
+    .b2 { background: var(--green-lite); }
+    .b3 { background: var(--gold-lite); }
+
+    ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .btn {
+      display: inline-block;
+      text-decoration: none;
+      background: #0f172a;
+      color: #fff;
+      font-weight: 800;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+
+    .note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 920px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Worksheets and Discussion Preview</h1>
+      <p>Open any level directly with preview mode. No chatbot flow required.</p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <div class="badge blue">Team Blue · L1</div>
+        <h2>Visual Placement</h2>
+        <div class="block b1">
+          Students answer where their two designated objects lie in the column.
+        </div>
+        <ul>
+          <li>Two assigned objects shown for each student</li>
+          <li>Question per object: Top, Middle, or Bottom</li>
+          <li>Save worksheet and continue with teacher password</li>
+        </ul>
+        <div class="links">
+          <a class="btn" href="worksheet-l1.html?preview=1">Open L1 Worksheet</a>
+          <a class="btn" href="discussion-l1.html?preview=1">Open L1 Discussion</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="badge green">Team Green · L2</div>
+        <h2>Full Column Rearrangement</h2>
+        <div class="block b2">
+          Students must rearrange ALL objects into one column order.
+        </div>
+        <ul>
+          <li>Every object gets a rank</li>
+          <li>Rank 1 is Top, highest rank is Bottom</li>
+          <li>Unique rank required for each object</li>
+          <li>Written explanation with density vocabulary</li>
+        </ul>
+        <div class="links">
+          <a class="btn" href="worksheet-l2.html?preview=1">Open L2 Worksheet</a>
+          <a class="btn" href="discussion-l2.html?preview=1">Open L2 Discussion</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="badge gold">Team Gold · L3</div>
+        <h2>Prediction vs Experimental Columns</h2>
+        <div class="block b3">
+          Students create one prediction column and one experimental column using density data.
+        </div>
+        <ul>
+          <li>Density data table is provided</li>
+          <li>Prediction column ranks for all objects</li>
+          <li>Experimental column ranks for all objects</li>
+          <li>Unique rank required in each column</li>
+          <li>Reflection on what changed and why</li>
+        </ul>
+        <div class="links">
+          <a class="btn" href="worksheet-l3.html?preview=1">Open L3 Worksheet</a>
+          <a class="btn" href="discussion-l3.html?preview=1">Open L3 Discussion</a>
+        </div>
+      </article>
+    </section>
+
+    <div class="note">Preview links use ?preview=1 so pages load with sample data. Cork was replaced with Ping Pong Ball.</div>
+  </div>
+</body>
+</html>

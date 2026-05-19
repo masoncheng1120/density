@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Density Lab - Worksheet</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #14532d; min-height: 100vh; }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 24px 16px 32px; }
+    .card { background: #fff; border: 2px solid #16a34a; border-radius: 20px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.1); }
+    .badge { display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #fff; border-radius: 999px; padding: 10px 16px; font-weight: 900; font-size: 14px; }
+    .chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin: 20px 0; }
+    .chip { border-radius: 16px; border: 3px solid #16a34a; padding: 20px; font-weight: 800; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); font-size: 18px; text-align: center; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15); transition: transform 0.2s; }
+    .chip:hover { transform: scale(1.05); }
+    .block { margin: 20px 0; background: linear-gradient(135deg, #bbf7d0 0%, #86efac 100%); border: 2px solid #16a34a; border-radius: 14px; padding: 14px 16px; font-weight: 600; font-size: 15px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; border: 2px solid #16a34a; border-radius: 12px; overflow: hidden; }
+    th, td { border-bottom: 2px solid #dcfce7; padding: 14px; text-align: left; }
+    th { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); font-size: 13px; text-transform: uppercase; font-weight: 900; color: #14532d; }
+    tr:hover td { background: #f0fdf4; }
+    select, textarea, input, button { font: inherit; }
+    select, textarea, input { width: 100%; border: 2px solid #16a34a; border-radius: 10px; padding: 11px 12px; background: #f0fdf4; color: #14532d; font-weight: 600; }
+    textarea { min-height: 76px; }
+    select:focus, textarea:focus, input:focus { outline: none; border-color: #15803d; background: #dcfce7; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+    button, a.btn { border: 0; text-decoration: none; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #fff; border-radius: 12px; padding: 12px 18px; font-weight: 900; cursor: pointer; transition: transform 0.1s; }
+    button:hover, a.btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(22, 163, 74, 0.3); }
+    .muted { color: #0c663c; opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="missing" style="display:none;">
+      <h2>Missing Data</h2>
+      <p class="muted">Please complete chatbot first.</p>
+      <a class="btn" href="index.html">Go to Chatbot</a>
+    </div>
+
+    <div id="main" style="display:none;">
+      <div class="card" id="head"></div>
+      <div class="card" id="sheet"></div>
+    </div>
+  </div>
+
+  <script>
+    const LAB_PASSWORD = "WhoareweCWCC";
+
+    const OBJECTS = [
+      { label: "Metal Coin", density: 7.8 },
+      { label: "Fresh Grape", density: 1.03 },
+      { label: "Lego", density: 0.8 },
+      { label: "Ping Pong Ball", density: 0.08 },
+      { label: "Eraser Piece", density: 1.2 },
+      { label: "Wax Chunk", density: 0.95 },
+      { label: "Honey", density: 1.36 },
+      { label: "Dish Soap", density: 1.06 },
+      { label: "Cooking Oil", density: 0.92 },
+      { label: "Colored Water", density: 1.0 }
+    ];
+
+    const previewMode = new URLSearchParams(window.location.search).get("preview") === "1";
+    let profile = JSON.parse(localStorage.getItem("DLAB_PROFILE") || "null");
+    let result = JSON.parse(localStorage.getItem("DLAB_RESULT") || "null");
+
+    if ((!profile || !result || result.level !== "L2") && !previewMode) {
+      document.getElementById("missing").style.display = "block";
+    } else {
+      if (!profile || !result || result.level !== "L2") {
+        profile = { name: "Preview Student", groupLetter: "B", groupSize: 5 };
+        result = { level: "L2", team: "green" };
+      }
+      document.getElementById("main").style.display = "block";
+      render();
+    }
+
+    function hashSeed(text) {
+      let hash = 2166136261;
+      for (let i = 0; i < text.length; i++) {
+        hash ^= text.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+      return hash >>> 0;
+    }
+
+    function seededShuffle(items, seedText) {
+      const out = [...items];
+      let seed = hashSeed(seedText);
+      const rnd = () => {
+        seed += 0x6d2b79f5;
+        let t = seed;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+      for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(rnd() * (i + 1));
+        [out[i], out[j]] = [out[j], out[i]];
+      }
+      return out;
+    }
+
+    function assignL2() {
+      // Distribute all objects among group members, no overlap, all covered
+      const shuffled = seededShuffle(OBJECTS, `${profile.groupLetter}:L2`);
+      const groupSize = Math.max(1, profile.groupSize);
+      const base = Math.floor(shuffled.length / groupSize);
+      const extra = shuffled.length % groupSize;
+      let idx = hashSeed(`${profile.name}:${profile.groupLetter}`) % groupSize;
+      let start = idx * base + Math.min(idx, extra);
+      let count = base + (idx < extra ? 1 : 0);
+      let primary = shuffled.slice(start, start + count);
+      return { primary, all: shuffled };
+    }
+
+    function render() {
+      const assigned = assignL2();
+      document.getElementById("head").innerHTML = `
+        <div class="badge">🟢 Team Green - Researcher</div>
+        <div style="margin-top:8px; font-size:20px; font-weight:900;">Worksheet: Rearrange Column</div>
+        <div class="muted" style="margin-top:5px;">${profile.name} | Group ${profile.groupLetter} (${profile.groupSize} members)</div>
+      `;
+
+      const rankOptions = assigned.all.map((_, i) => `<option value="${i + 1}">${i + 1}</option>`).join("");
+      document.getElementById("sheet").innerHTML = `
+        <div class="block"><b>Now, go to Mr. Mason, Ms Marine or Ms Yoyo for your two assigned items.</b></div>
+        <div class="chips">${assigned.primary.map(o => `<span class=\"chip\">${o.label} (${o.density} g/cm3)</span>`).join("")}</div>
+        <div class="block"><b>🧪 What You Do:</b> Add your assigned object(s) to the density column. Then work with your teammates to rearrange all 10 objects in the full column based on the real result.</div>
+        <div class="block" style="background: linear-gradient(135deg, #86efac 0%, #6ee7b7 100%); border-color: #16a34a;"><b>📝 Record Below:</b> Enter the rank for all 10 objects (1=Top/Least Dense to ${assigned.all.length}=Bottom/Most Dense). Each rank must be unique.</div>
+
+        <div style="overflow-x:auto; margin-top:10px;">
+          <table style="width:100%; border-collapse:collapse; border:1px solid #dbe7f3;">
+            <thead><tr><th style="padding:8px; border-bottom:1px solid #dbe7f3; text-align:left;">Object</th><th style="padding:8px; border-bottom:1px solid #dbe7f3; text-align:left;">Column Rank</th></tr></thead>
+            <tbody>
+              ${assigned.all.map((o, i) => `
+                <tr>
+                  <td style="padding:8px; border-bottom:1px solid #dbe7f3;">${o.label}</td>
+                  <td style="padding:8px; border-bottom:1px solid #dbe7f3;">
+                    <select id="rank-${i}">${rankOptions}</select>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label>Explain how density helped your team arrange the full column. Example: ________ objects sink and ________ objects float. I have to compare the density between the object and the _________________.</label>
+          <textarea id="why" placeholder="Example: Denser objects sink and less dense objects float. I have to compare the density between the object and the liquid. Use words like denser, less dense, mass, and volume."></textarea>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label>Teacher Password To Continue</label>
+          <input id="pw" type="password" placeholder="Enter teacher password" />
+        </div>
+
+        <div class="row">
+          <button id="saveBtn" type="button">Save Worksheet</button>
+          <a class="btn" id="nextBtn" href="discussion.html">Go To Discussion</a>
+        </div>
+      `;
+
+      document.getElementById("saveBtn")?.addEventListener("click", () => {
+        const fullOrder = assigned.all.map((o, i) => ({
+          object: o.label,
+          rank: Number(document.getElementById(`rank-${i}`).value)
+        }));
+        const ranked = fullOrder.map(x => x.rank);
+        const uniqueRanks = new Set(ranked);
+        if (uniqueRanks.size !== assigned.all.length) {
+          alert("Each object must have a unique rank for a full column order.");
+          return;
+        }
+
+        localStorage.setItem("DLAB_WORKSHEET", JSON.stringify({
+          level: "L2",
+          team: "green",
+          profile,
+          primary: assigned.primary.map(x => x.label),
+          all: assigned.all.map(x => x.label),
+          responses: {
+            fullColumnOrder: fullOrder.sort((a, b) => a.rank - b.rank),
+            why: document.getElementById("why").value.trim()
+          }
+        }));
+        alert("Worksheet saved.");
+      });
+
+      document.getElementById("nextBtn")?.addEventListener("click", (e) => {
+        if (document.getElementById("pw").value !== LAB_PASSWORD) {
+          e.preventDefault();
+          alert("Incorrect teacher password.");
+        }
+      });
+    }
+  </script>
+</body>
+</html>

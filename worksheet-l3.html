@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Density Lab - Worksheet</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #421f1f; min-height: 100vh; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px 32px; }
+    .card { background: #fff; border: 2px solid #d97706; border-radius: 20px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(217, 119, 6, 0.1); }
+    .badge { display: inline-block; background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #fff; border-radius: 999px; padding: 10px 16px; font-weight: 900; font-size: 14px; }
+    .chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin: 20px 0; }
+    .chip { border-radius: 16px; border: 3px solid #d97706; padding: 20px; font-weight: 800; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); font-size: 18px; text-align: center; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.15); transition: transform 0.2s; }
+    .chip:hover { transform: scale(1.05); }
+    .block { margin: 20px 0; background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%); border: 2px solid #d97706; border-radius: 14px; padding: 14px 16px; font-weight: 600; font-size: 15px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; border: 2px solid #d97706; border-radius: 12px; overflow: hidden; }
+    th, td { border-bottom: 2px solid #fef3c7; padding: 14px; text-align: left; }
+    th { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); font-size: 13px; text-transform: uppercase; font-weight: 900; color: #421f1f; }
+    tr:hover td { background: #fffbeb; }
+    select, textarea, input, button { font: inherit; }
+    select, textarea, input { width: 100%; border: 2px solid #d97706; border-radius: 10px; padding: 11px 12px; background: #fffbeb; color: #421f1f; font-weight: 600; }
+    textarea { min-height: 76px; }
+    select:focus, textarea:focus, input:focus { outline: none; border-color: #b45309; background: #fef3c7; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+    button, a.btn { border: 0; text-decoration: none; background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #fff; border-radius: 12px; padding: 12px 18px; font-weight: 900; cursor: pointer; transition: transform 0.1s; }
+    button:hover, a.btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(217, 119, 6, 0.3); }
+    .muted { color: #7c2d12; opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="missing" style="display:none;">
+      <h2>Missing Data</h2>
+      <p class="muted">Please complete chatbot first.</p>
+      <a class="btn" href="index.html">Go to Chatbot</a>
+    </div>
+
+    <div id="main" style="display:none;">
+      <div class="card" id="head"></div>
+      <div class="card" id="sheet"></div>
+    </div>
+  </div>
+
+  <script>
+    const LAB_PASSWORD = "WhoareweCWCC";
+
+    const OBJECTS = [
+      { label: "Metal Coin", density: 7.8 },
+      { label: "Fresh Grape", density: 1.03 },
+      { label: "Lego", density: 0.8 },
+      { label: "Ping Pong Ball", density: 0.08 },
+      { label: "Eraser Piece", density: 1.2 },
+      { label: "Wax Chunk", density: 0.95 },
+      { label: "Honey", density: 1.36 },
+      { label: "Dish Soap", density: 1.06 },
+      { label: "Cooking Oil", density: 0.92 },
+      { label: "Colored Water", density: 1.0 }
+    ];
+
+    const previewMode = new URLSearchParams(window.location.search).get("preview") === "1";
+    let profile = JSON.parse(localStorage.getItem("DLAB_PROFILE") || "null");
+    let result = JSON.parse(localStorage.getItem("DLAB_RESULT") || "null");
+
+    if ((!profile || !result || result.level !== "L3") && !previewMode) {
+      document.getElementById("missing").style.display = "block";
+    } else {
+      if (!profile || !result || result.level !== "L3") {
+        profile = { name: "Preview Student", groupLetter: "C", groupSize: 5 };
+        result = { level: "L3", team: "gold" };
+      }
+      document.getElementById("main").style.display = "block";
+      render();
+    }
+
+    function hashSeed(text) {
+      let hash = 2166136261;
+      for (let i = 0; i < text.length; i++) {
+        hash ^= text.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+      return hash >>> 0;
+    }
+
+    function seededShuffle(items, seedText) {
+      const out = [...items];
+      let seed = hashSeed(seedText);
+      const rnd = () => {
+        seed += 0x6d2b79f5;
+        let t = seed;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+      for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(rnd() * (i + 1));
+        [out[i], out[j]] = [out[j], out[i]];
+      }
+      return out;
+    }
+
+    function assignL3() {
+      // Distribute all objects among group members, no overlap, all covered
+      const shuffled = seededShuffle(OBJECTS, `${profile.groupLetter}:L3`);
+      const groupSize = Math.max(1, profile.groupSize);
+      const base = Math.floor(shuffled.length / groupSize);
+      const extra = shuffled.length % groupSize;
+      let idx = hashSeed(`${profile.name}:${profile.groupLetter}`) % groupSize;
+      let start = idx * base + Math.min(idx, extra);
+      let count = base + (idx < extra ? 1 : 0);
+      let primary = shuffled.slice(start, start + count);
+      return { primary, all: shuffled };
+    }
+
+    function render() {
+      const assigned = assignL3();
+      document.getElementById("head").innerHTML = `
+        <div class="badge">🟡 Team Gold - Architect</div>
+        <div style="margin-top:8px; font-size:20px; font-weight:900;">Worksheet: Predict Then Test</div>
+        <div class="muted" style="margin-top:5px;">${profile.name} | Group ${profile.groupLetter} (${profile.groupSize} members)</div>
+      `;
+
+      // Prediction: where will each object settle in a full column of 10?
+      const predRankOptions = assigned.all.map((_, i) => `<option value="${i + 1}">${i + 1}</option>`).join("");
+      // Experimental: rearrange all 10 objects (like L2)
+      const expRankOptions = assigned.all.map((_, i) => `<option value="${i + 1}">${i + 1}</option>`).join("");
+
+      // Table of all 10 objects and their densities
+      const allDensityTable = `
+        <table>
+          <thead><tr><th>Object</th><th>Approx Density (g/cm³)</th></tr></thead>
+          <tbody>
+            ${assigned.all.map(o => `<tr><td>${o.label}</td><td>${o.density}</td></tr>`).join("")}
+          </tbody>
+        </table>
+      `;
+
+      document.getElementById("sheet").innerHTML = `
+        <div class="block"><b>Now, go to Mr. Mason, Ms Marine or Ms Yoyo for your two assigned items.</b></div>
+        <div class="chips">${assigned.primary.map(o => `<span class=\"chip\">${o.label} (${o.density} g/cm3)</span>`).join("")}</div>
+        <div class="block"><b>🧪 What You Do:</b> (1) Use the density data sheet to PREDICT the rank of every object in a full column of 10 objects. (2) Add only your assigned object(s) to the density column. (3) As a group, rearrange all 10 objects in the column based on the real result.</div>
+        <div class="block" style="background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%); border-color: #d97706;"><b>📝 Record Below:</b> Predict the position (1-10) for all 10 objects, then record the final group arrangement for all 10 objects (1=Top/Least Dense to 10=Bottom/Most Dense). Each rank must be unique in both columns.</div>
+        ${allDensityTable}
+
+        <table>
+          <thead><tr><th>All Objects</th><th>Approx Density</th><th>Prediction (1-10)</th></tr></thead>
+          <tbody>
+            ${assigned.all.map((o, i) => `
+              <tr>
+                <td>${o.label}</td>
+                <td>${o.density} g/cm3</td>
+                <td><select id="pred-${i}">${predRankOptions}</select></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+
+        <table>
+          <thead><tr><th>All Objects</th><th>Experimental Column Rank</th></tr></thead>
+          <tbody>
+            ${assigned.all.map((o, i) => `
+              <tr>
+                <td>${o.label}</td>
+                <td><select id="final-${i}">${expRankOptions}</select></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+
+        <div style="margin-top:10px;">
+          <label>Were your predictions correct for all of the objects? Why or why not?</label>
+          <textarea id="reflection" placeholder="Explain using density evidence for the full set of objects."></textarea>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label>Teacher Password To Continue</label>
+          <input id="pw" type="password" placeholder="Enter teacher password" />
+        </div>
+
+        <div class="row">
+          <button id="saveBtn" type="button">Save Worksheet</button>
+          <a class="btn" id="nextBtn" href="discussion.html">Go To Discussion</a>
+        </div>
+      `;
+
+      document.getElementById("saveBtn")?.addEventListener("click", () => {
+        // Save predictions for all objects
+        const predictions = assigned.all.map((o, i) => ({
+          object: o.label,
+          predictRank: Number(document.getElementById(`pred-${i}`).value)
+        }));
+        // Save experimental arrangement for all 10
+        const experimental = assigned.all.map((o, i) => ({
+          object: o.label,
+          finalRank: Number(document.getElementById(`final-${i}`).value)
+        }));
+        // Check for unique ranks
+        const predSet = new Set(predictions.map(x => x.predictRank));
+        const expSet = new Set(experimental.map(x => x.finalRank));
+        if (predSet.size !== predictions.length) {
+          alert("Use each prediction rank exactly once for all objects.");
+          return;
+        }
+        if (expSet.size !== experimental.length) {
+          alert("Use each experimental rank exactly once for all objects.");
+          return;
+        }
+        localStorage.setItem("DLAB_WORKSHEET", JSON.stringify({
+          level: "L3",
+          team: "gold",
+          profile,
+          primary: assigned.primary.map(x => x.label),
+          all: assigned.all.map(x => x.label),
+          predictions,
+          experimental,
+          reflection: document.getElementById("reflection").value.trim()
+        }));
+        alert("Worksheet saved.");
+      });
+
+      document.getElementById("nextBtn")?.addEventListener("click", (e) => {
+        if (document.getElementById("pw").value !== LAB_PASSWORD) {
+          e.preventDefault();
+          alert("Incorrect teacher password.");
+        }
+      });
+    }
+  </script>
+</body>
+</html>
