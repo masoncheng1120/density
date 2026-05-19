@@ -83,6 +83,45 @@
       grid-template-rows: 1fr auto;
       gap: 10px;
     }
+    .coachBox {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .coachHead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .coachTitle {
+      font-weight: 900;
+      font-size: 16px;
+    }
+    .coachRole {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .coachMsgs {
+      display: grid;
+      gap: 10px;
+    }
+    .coachMsg {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #7c2d12;
+      border-radius: 12px;
+      padding: 10px 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
     .msgs {
       overflow-y: auto;
       max-height: 420px;
@@ -116,6 +155,22 @@
       border: 2px solid var(--border);
       border-radius: 18px;
       padding: 14px;
+    }
+    .roleBox {
+      display: grid;
+      gap: 8px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      margin: 10px 0;
+    }
+    .roleTitle {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 900;
+      letter-spacing: .05em;
+      text-transform: uppercase;
     }
     .badge {
       display: inline-flex;
@@ -189,6 +244,14 @@
       <button id="startBtn" type="button">Start Chat</button>
     </section>
 
+    <section class="coachBox" id="coachBox">
+      <div class="coachHead">
+        <div class="coachTitle">Mr. Mason Comments</div>
+        <div class="coachRole" id="coachRole">Feedback</div>
+      </div>
+      <div class="coachMsgs" id="coachMsgs"></div>
+    </section>
+
     <section class="chat" id="chat" style="display:none;">
       <div class="msgs" id="msgs"></div>
       <div class="inputRow">
@@ -200,8 +263,11 @@
     <section class="result" id="resultCard">
       <div id="teamBadge" class="badge">Team</div>
       <div id="teamLine" style="font-weight:800; font-size:18px;"></div>
-      <div class="feedback" id="feedback"></div>
-      <div id="encourage" style="font-size:15px;"></div>
+      <div class="roleBox" id="roleBox">
+        <div class="roleTitle" id="roleTitle">Role Notes</div>
+        <div class="feedback" id="feedback"></div>
+        <div id="encourage" style="font-size:15px;"></div>
+      </div>
       <a class="nextBtn" href="worksheet.html">Go To My Worksheet</a>
     </section>
   </div>
@@ -232,6 +298,15 @@
       d.textContent = text;
       $("msgs").appendChild(d);
       $("msgs").scrollTop = $("msgs").scrollHeight;
+    }
+
+    function addCoachComment(text) {
+      $("coachBox").style.display = "block";
+      const d = document.createElement("div");
+      d.className = "coachMsg";
+      d.textContent = text;
+      $("coachMsgs").appendChild(d);
+      $("coachMsgs").scrollTop = $("coachMsgs").scrollHeight;
     }
 
     function scoreQuestion1(answer) {
@@ -284,8 +359,9 @@
 
     async function getImmediateFeedback(questionNumber, answer) {
       const systemPrompt = `You are Mr. Mason, a warm Grade 7 science teacher.
-Give one short supportive response to the student's answer, then ask one brief follow-up question.
-Keep it to 1-2 sentences and sound natural.`;
+    Give one short supportive response to the student's answer only.
+    Do not ask a new question.
+    Keep it to 1-2 sentences and sound natural.`;
 
       const questionText = q[questionNumber - 1] || "";
       const userPrompt = `Question: ${questionText}\nStudent answer: ${answer}`;
@@ -386,6 +462,7 @@ Output ONLY valid JSON with this exact shape:
       badge.className = `badge ${team}`;
       badge.textContent = `${t.emoji} ${t.name}`;
       $("teamLine").textContent = `${t.role}`;
+      $("roleTitle").textContent = `${t.role} Notes`;
 
       const fb = $("feedback");
       fb.innerHTML = "";
@@ -395,7 +472,7 @@ Output ONLY valid JSON with this exact shape:
         fb.appendChild(p);
       });
       $("encourage").textContent = message;
-      add("ai", `Mr. Mason says: you are assigned to ${t.name}. Click the worksheet button below when you are ready.`);
+      addCoachComment(`Mr. Mason says: you are assigned to ${t.name}. Click the worksheet button below when you are ready.`);
     }
 
     function begin() {
@@ -410,6 +487,8 @@ Output ONLY valid JSON with this exact shape:
       add("ai", `Hi ${name}, I am Mr. Mason. Welcome to our Density Lab.`);
       add("ai", "Here is our plan: first, you will do this chatbot with me. Next, you will do your experiment worksheet. After that, you will complete the discussion.");
       add("ai", "I will ask you 3 quick density questions so I can see what you already know and guide you to the right level. Do your best. It is completely okay if you are still learning.");
+      $("coachBox").style.display = "block";
+      $("coachRole").textContent = "Feedback";
       add("ai", q[0]);
     }
 
@@ -422,7 +501,7 @@ Output ONLY valid JSON with this exact shape:
 
       if (phase === "q1") {
         answers.q1 = text;
-        add("ai", await getImmediateFeedback(1, text));
+        addCoachComment(await getImmediateFeedback(1, text));
         phase = "q2";
         add("ai", q[1]);
         $("sendBtn").disabled = false;
@@ -430,7 +509,7 @@ Output ONLY valid JSON with this exact shape:
       }
       if (phase === "q2") {
         answers.q2 = text;
-        add("ai", await getImmediateFeedback(2, text));
+        addCoachComment(await getImmediateFeedback(2, text));
         phase = "q3";
         add("ai", q[2]);
         $("sendBtn").disabled = false;
@@ -438,7 +517,7 @@ Output ONLY valid JSON with this exact shape:
       }
       if (phase === "q3") {
         answers.q3 = text;
-        add("ai", await getImmediateFeedback(3, text));
+        addCoachComment(await getImmediateFeedback(3, text));
         phase = "eval";
         await evaluate();
         phase = "done";
