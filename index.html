@@ -234,18 +234,31 @@
       $("msgs").scrollTop = $("msgs").scrollHeight;
     }
 
+    function scoreQuestion1(answer) {
+      const text = answer.toLowerCase();
+      if (/(mass.*volume|volume.*mass|particles|packed|compact)/.test(text)) return 1;
+      if (/(mass|volume|heavy|matter|space)/.test(text)) return 0.5;
+      return 0;
+    }
+
+    function scoreQuestion2(answer) {
+      const text = answer.toLowerCase();
+      if (/(mass\s*\/\s*volume|d\s*=\s*m\s*\/\s*v|density\s*=\s*mass\s*\/\s*volume)/.test(text)) return 1;
+      if (/(mass|volume|divide|formula)/.test(text)) return 0.5;
+      return 0;
+    }
+
+    function scoreQuestion3(answer) {
+      const text = answer.toLowerCase();
+      if (/(less dense than air|density|buoyant|air is denser|air.*denser)/.test(text)) return 1;
+      if (/(float|sink|helium|air|lighter|heavy)/.test(text)) return 0.5;
+      return 0;
+    }
+
     function heuristicAssign() {
-      const a1 = answers.q1.toLowerCase();
-      const a2 = answers.q2.toLowerCase();
-      const a3 = answers.q3.toLowerCase();
-
-      const q1Strong = /(mass|volume|particles|packed|compact)/.test(a1);
-      const q2Right = /(mass\s*\/\s*volume|d\s*=\s*m\s*\/\s*v|density\s*=\s*mass\s*\/\s*volume)/.test(a2);
-      const q3Strong = /(less dense than air|density|air.*dense|buoy)/.test(a3);
-
-      const score = [q1Strong, q2Right, q3Strong].filter(Boolean).length;
-      if (score <= 1) return "blue";
-      if (score === 2) return "green";
+      const score = scoreQuestion1(answers.q1) + scoreQuestion2(answers.q2) + scoreQuestion3(answers.q3);
+      if (score < 1.5) return "blue";
+      if (score < 2.5) return "green";
       return "gold";
     }
 
@@ -269,6 +282,21 @@
       return "Thanks for explaining your thinking. Even if it is not perfect yet, your answer helps Mr. Mason see what you understand so far.";
     }
 
+    async function getImmediateFeedback(questionNumber, answer) {
+      const systemPrompt = `You are Mr. Mason, a warm Grade 7 science teacher.
+Give one short supportive response to the student's answer, then ask one brief follow-up question.
+Keep it to 1-2 sentences and sound natural.`;
+
+      const questionText = q[questionNumber - 1] || "";
+      const userPrompt = `Question: ${questionText}\nStudent answer: ${answer}`;
+
+      try {
+        return await callAPI(systemPrompt, [{ role: "user", content: userPrompt }]);
+      } catch (e) {
+        return coachReply(questionNumber, answer);
+      }
+    }
+
     async function callAPI(systemPrompt, messages) {
       const res = await fetch(DEEPSEEK_API_URL, {
         method: "POST",
@@ -290,15 +318,18 @@
 
     async function evaluate() {
       add("ai", "Mr. Mason is checking your understanding...");
+      const localScore = scoreQuestion1(answers.q1) + scoreQuestion2(answers.q2) + scoreQuestion3(answers.q3);
       const sys = `You are Mr. Mason, a warm Grade 7 science teacher assigning level by density understanding.
     Sound human, encouraging, and clear.
 Q1: "${answers.q1}"
 Q2: "${answers.q2}"
 Q3: "${answers.q3}"
 Rules:
-- blue/L1 for weak or incorrect basics.
-- green/L2 for mostly correct basics.
-- gold/L3 for strong and precise understanding.
+Use this rubric for the final level:
+- blue/L1 if the student's total understanding is below 1.5 out of 3.
+- green/L2 if the student's total understanding is from 1.5 up to 2.49 out of 3.
+- gold/L3 if the student's total understanding is 2.5 or higher out of 3.
+The local teacher score is ${localScore.toFixed(1)} out of 3.
     Write feedbackLines as short, student-friendly comments from Mr. Mason.
     Write message as a warm 1-2 sentence note from Mr. Mason.
 Output ONLY valid JSON with this exact shape:
@@ -323,6 +354,9 @@ Output ONLY valid JSON with this exact shape:
       }
 
       if (!TEAMS[parsed.team]) parsed.team = heuristicAssign();
+      if (localScore < 1.5) parsed.team = "blue";
+      else if (localScore < 2.5) parsed.team = "green";
+      else parsed.team = "gold";
       const t = TEAMS[parsed.team];
 
       const profile = {
@@ -384,27 +418,31 @@ Output ONLY valid JSON with this exact shape:
       if (!text) return;
       $("chatInput").value = "";
       add("me", text);
+      $("sendBtn").disabled = true;
 
       if (phase === "q1") {
         answers.q1 = text;
-        add("ai", coachReply(1, text));
+        add("ai", await getImmediateFeedback(1, text));
         phase = "q2";
         add("ai", q[1]);
+        $("sendBtn").disabled = false;
         return;
       }
       if (phase === "q2") {
         answers.q2 = text;
-        add("ai", coachReply(2, text));
+        add("ai", await getImmediateFeedback(2, text));
         phase = "q3";
         add("ai", q[2]);
+        $("sendBtn").disabled = false;
         return;
       }
       if (phase === "q3") {
         answers.q3 = text;
-        add("ai", coachReply(3, text));
+        add("ai", await getImmediateFeedback(3, text));
         phase = "eval";
         await evaluate();
         phase = "done";
+        $("sendBtn").disabled = false;
       }
     }
 
