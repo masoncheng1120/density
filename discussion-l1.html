@@ -170,8 +170,7 @@
       input.value = "";
       add("me", text);
       const worksheetContext = getWorksheetContext();
-
-        const sys = `You are Mr. Mason, a warm Grade 7 density teacher for L1 students.
+      const sys = `You are Mr. Mason, a warm Grade 7 density teacher for L1 students.
     Student worksheet data:
     ${worksheetContext.prompt}
 Give helpful, simple feedback in 2-3 sentences.
@@ -181,20 +180,18 @@ Guide the student to explain why their object stayed on top of or at the bottom 
 Use clear sentence starters or mini examples when useful, such as "It stayed on top of oil because..." or "It sank below water because...".
 Then ask exactly one short follow-up question about density and liquid layers.
 The follow-up must end with a question mark.`;
-      let reply = "Nice idea. Try naming the liquid layer and comparing densities. For example, you could say, 'It stayed on top of the oil because it was less dense than oil,' or 'It went to the bottom of the honey because it was denser than the liquids above it.' Which liquid was your object on top of or below?";
-      const nextQuestionNumber = aiQuestionsAsked + 1;
-      aiQuestionsAsked = nextQuestionNumber;
       isAwaiting = true;
       document.getElementById("send").disabled = true;
       try {
-        reply = await callAPI(sys, convo.filter(x => x.role === "me").map(x => ({ role: "user", content: x.text })));
-      } catch (e) {}
-      finally {
+        const reply = await callAPI(sys, convo.filter(x => x.role === "me").map(x => ({ role: "user", content: x.text })));
+        aiQuestionsAsked++;
+        add("ai", `Question ${aiQuestionsAsked}: ${reply}`);
+      } catch (e) {
+        add("ai", "Sorry, the AI could not respond right now. Please check your internet connection and try again.");
+      } finally {
         isAwaiting = false;
         document.getElementById("send").disabled = false;
       }
-
-      add("ai", `Question ${nextQuestionNumber}: ${reply}`);
     }
 
     function exportPDF() {

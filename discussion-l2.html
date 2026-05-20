@@ -169,7 +169,7 @@
       input.value = "";
       add("me", text);
       const worksheetContext = getWorksheetContext();
-        const sys = `You are Mr. Mason, a Grade 7 density teacher for L2 students.
+      const sys = `You are Mr. Mason, a Grade 7 density teacher for L2 students.
     Student worksheet data:
     ${worksheetContext.prompt}
 Give helpful scientific feedback in 2-3 sentences with clear density reasoning.
@@ -177,20 +177,18 @@ Give helpful scientific feedback in 2-3 sentences with clear density reasoning.
     Refer to the student's recorded ranking or written explanation when useful.
 Then ask exactly one short follow-up question.
 The follow-up must end with a question mark.`;
-      let reply = "Good reasoning. Connect your ranking to density values and layer positions. Which evidence most strongly supports your object's final rank?";
-      const nextQuestionNumber = aiQuestionsAsked + 1;
-      aiQuestionsAsked = nextQuestionNumber;
       isAwaiting = true;
       document.getElementById("send").disabled = true;
       try {
-        reply = await callAPI(sys, convo.filter(x => x.role === "me").map(x => ({ role: "user", content: x.text })));
-      } catch (e) {}
-      finally {
+        const reply = await callAPI(sys, convo.filter(x => x.role === "me").map(x => ({ role: "user", content: x.text })));
+        aiQuestionsAsked++;
+        add("ai", `Question ${aiQuestionsAsked}: ${reply}`);
+      } catch (e) {
+        add("ai", "Sorry, the AI could not respond right now. Please check your internet connection and try again.");
+      } finally {
         isAwaiting = false;
         document.getElementById("send").disabled = false;
       }
-
-      add("ai", `Question ${nextQuestionNumber}: ${reply}`);
     }
 
     function exportPDF() {
